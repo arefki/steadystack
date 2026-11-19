@@ -28,10 +28,19 @@ Both contracts live at the **same address** on their chains (same deployer nonce
 | `SteadyVault` | Base Sepolia (84532) | `0xdcF6cccD1d6eC0f071409f6e09989AE637CC501f` |
 
 - **Sourcify: exact match (creation + runtime) for both contracts.**
-- **8+ full-loop DCA buys executed on-chain** (1 USDC → ~0.0000376 WETH each).
+- **10 full-loop DCA buys executed on-chain** (1 USDC → ~0.0000376 WETH each;
+  10 USDC → 0.000371050832202012 WETH total; vault holds 3.230117 USDC).
   First buy — Lasna react tx `0x0d083ddbe4964a1e442aaa82d5f0d6caf8e49c395ea2ea334dbd6a7d47c59a4a`,
   callback tx `0x1fd4f31123e43ee4983cad6e987faa37c147e446c88447def374f416bf75ca94`
-  (Base Sepolia block 60893168, 233,937 gas).
+  (Base Sepolia block 60893168, 233,937 gas). All 10 callback txs (verified
+  from vault `Bought` event logs — logs are authoritative):
+  #1 `0x1fd4f311…`, #2 `0x5516324e…`, #3 `0x991062e7…`, #4 `0x2214c6a7…`,
+  #5 `0xc4fc9cff…`, #6 `0x7d3da4a7…`, #7 `0x7f9a5dd2…`, #8 `0x3789aa2b…`,
+  #9 `0x0caf3309…` (poke buy), #10 `0xda856e85…` (full hashes in
+  `docs/data/buys.json`). An 11th buy was requested via `poke()` on 2026-11-20
+  (Lasna tx `0x51e6984fa5831ab912899ee9ae72fbe51f520605826bf2a44031ac7d563e73bc`,
+  `buyRequests` 11) and its callback is pending delivery at submission time —
+  see the submission notes for its final status.
 - **Guard trip + resume proven live**: a 0.0007 WETH sell tripped the guard
   (`guardTripped=true`, vault paused, buys blocked); five buy-back swaps recovered
   the EMA and the guard cleared on its own (vault unpaused, DCA resumed).
@@ -90,7 +99,12 @@ BEFORE `setRecipient`) → fund the vault with USDC → `setRecipient` + `setRul
 **Operational note (measured live):** a buy-react costs ~170k gas ≈ 0.017 lREACT, and
 the loop burns roughly 0.5–0.8 lREACT/hour at one buy per ~2-min tick (buys + tick /
 Swap reacts). Any outstanding debt suspends the reactive — monitor `debt()` and the
-reactive balance, and call `coverDebt()` + top up before they run dry.
+reactive balance, and call `coverDebt()` + top up before they run dry. **Funding
+decision (Nov 20, 14-helper review):** continuous running needs ~12 lREACT/day but
+the testnet faucet supplies at most ~2.6/day, so the loop runs **on-demand via
+`poke()`** and stays parked (intervalTicks 100,000) between demo runs — the 10
+proven buys + guard proof above are the permanent record, and the dashboard shows
+live balance + debt at all times.
 
 ## Links
 
