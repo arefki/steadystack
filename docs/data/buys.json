@@ -1,0 +1,122 @@
+{
+  "note": "Pre-indexed DCA history, decoded from on-chain events (vault Bought on Base Sepolia + reactive BuyRequested on Lasna). Pairing is by event order: 10 requests, 10 fills, 0 skips. The live site re-scans from lastIndexedBlock for newer buys. Logs are authoritative; PHASE3-RESULTS.md listed buy #3 as 0x2c386e81... which does not appear in logs. Amounts are exact decimal strings (no floats).",
+  "generatedAt": "2026-11-20T01:35+07:00",
+  "vault": "0xdcF6cccD1d6eC0f071409f6e09989AE637CC501f",
+  "reactive": "0xdcF6cccD1d6eC0f071409f6e09989AE637CC501f",
+  "pool": "0x46880b404cd35c165eddeff7421019f8dd25f4ad",
+  "lastIndexedBlockBase": 60953188,
+  "lastIndexedBlockLasna": 8753201,
+  "buySkippedCount": 0,
+  "buys": [
+    {
+      "n": 1,
+      "txBase": "0x1fd4f31123e43ee4983cad6e987faa37c147e446c88447def374f416bf75ca94",
+      "blockBase": 60893168,
+      "txLasna": "0x0d083ddbe4964a1e442aaa82d5f0d6caf8e49c395ea2ea334dbd6a7d47c59a4a",
+      "blockLasna": 8742001,
+      "tick": 3,
+      "amountInUsdc": "1",
+      "amountOutWeth": "0.000037575243826843",
+      "priceUsd": "26532.903523"
+    },
+    {
+      "n": 2,
+      "txBase": "0x5516324e0b2d65177d4535f9df413108222fd7f068fb147d01a25664451f8b53",
+      "blockBase": 60893709,
+      "txLasna": "0xc25d307588f2a80f0e789ba83c5ef5a1baf2c2e2c6376b13ce384b7ed6de7115",
+      "blockLasna": 8742101,
+      "tick": 4,
+      "amountInUsdc": "1",
+      "amountOutWeth": "0.000037573760394887",
+      "priceUsd": "26533.951067"
+    },
+    {
+      "n": 3,
+      "txBase": "0x991062e7df591623643544bba5812e1a30787956a1571795e9c49679a08982fb",
+      "blockBase": 60894234,
+      "txLasna": "0x3b16d41011cbbee80a15d5694c041ddb8e200ed3b19210d4f5c3b5ca4024876d",
+      "blockLasna": 8742201,
+      "tick": 5,
+      "amountInUsdc": "1",
+      "amountOutWeth": "0.000037572277050775",
+      "priceUsd": "26534.998631"
+    },
+    {
+      "n": 4,
+      "txBase": "0x2214c6a7b34eeb4b278f285e2de68000cf151f42ce7579e7c1aa5228a5b40cc7",
+      "blockBase": 60895112,
+      "txLasna": "0x7baf64a541a78f0e41d7af4b04d48f3ecee90274b1901a8f3b9f42fa6f0ae96c",
+      "blockLasna": 8742367,
+      "tick": 6,
+      "amountInUsdc": "1",
+      "amountOutWeth": "0.000037570895282156",
+      "priceUsd": "26535.974535"
+    },
+    {
+      "n": 5,
+      "txBase": "0xc4fc9cfffc1e2422e4e3cec9650ea53bd0a76e1f6715ecde8b0635b7905c2111",
+      "blockBase": 60899002,
+      "txLasna": "0x460ffde4d8e8482acbd41a80f078dcbaa37abc61a54940ac5f1cac4f56373920",
+      "blockLasna": 8743101,
+      "tick": 7,
+      "amountInUsdc": "1",
+      "amountOutWeth": "0.000036796702913898",
+      "priceUsd": "27094.289578"
+    },
+    {
+      "n": 6,
+      "txBase": "0x7d3da4a74969e59f38b585ffde2b28581a6ecb94919f684dd4300668ce81a12b",
+      "blockBase": 60899533,
+      "txLasna": "0xe0255f5d01404fd37ca1f73faeb0672dc69c57f17b8bc43a73726fc0009731ee",
+      "blockLasna": 8743201,
+      "tick": 8,
+      "amountInUsdc": "1",
+      "amountOutWeth": "0.000036795265345846",
+      "priceUsd": "27095.348146"
+    },
+    {
+      "n": 7,
+      "txBase": "0x7f9a5dd22b4a70eb6a8956a5b8148aa1af35e19861dda26b0ab33097023ab160",
+      "blockBase": 60900065,
+      "txLasna": "0x301b69cc8335ec05a1bef9147460e694cdfcc9a7b72f1005db912dd84b4072f8",
+      "blockLasna": 8743301,
+      "tick": 9,
+      "amountInUsdc": "1",
+      "amountOutWeth": "0.000036793827862036",
+      "priceUsd": "27096.406734"
+    },
+    {
+      "n": 8,
+      "txBase": "0x3789aa2b4529df0497930b2a769f3f8e27e01b3198aa908b3ea58719b7afd48e",
+      "blockBase": 60902231,
+      "txLasna": "0xe71602d4c52fccf2950f8119ef3378ec0329564f392116e955f9de258db0d0a8",
+      "blockLasna": 8743701,
+      "tick": 13,
+      "amountInUsdc": "1",
+      "amountOutWeth": "0.000036792390462461",
+      "priceUsd": "27097.465342"
+    },
+    {
+      "n": 9,
+      "txBase": "0x0caf3309fb1679b90ea58ed9cb692270b170bdf4e8c976bc4033a37033a8bbab",
+      "blockBase": 60907299,
+      "txLasna": "0x8e0fbad8158ca202b891df31101c7d94486e7e76a9337b3c57ecb26416a2027b",
+      "blockLasna": 8744640,
+      "tick": 16,
+      "amountInUsdc": "1",
+      "amountOutWeth": "0.000036790953147116",
+      "priceUsd": "27098.523972"
+    },
+    {
+      "n": 10,
+      "txBase": "0xda856e850a2e83f014d7ca7e746d373cba7b6e89e1c16d2ce64e0cb8c620d1b7",
+      "blockBase": 60907623,
+      "txLasna": "0x6428c79c370116bba9372f356a9daaab975737e3a60e35f8c159a6d20f32f23e",
+      "blockLasna": 8744701,
+      "tick": 17,
+      "amountInUsdc": "1",
+      "amountOutWeth": "0.000036789515915994",
+      "priceUsd": "27099.582622"
+    }
+  ]
+}

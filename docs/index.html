@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SteadyStack — Auto-DCA + Crash Guard</title>
+<meta name="description" content="SteadyStack: a reactive contract on Lasna that dollar-cost-averages WETH on Base Sepolia and stops buying when the price crashes. Live on-chain state, no mock numbers.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div id="compat-banner" class="compat-banner" hidden>
+  This page needs a modern browser with BigInt support to read on-chain numbers.
+</div>
+
+<div id="debt-banner" class="debt-banner" hidden>
+  <span class="debt-banner-text mono" id="debt-banner-text"></span>
+  <span class="debt-banner-sub" id="debt-banner-sub"></span>
+</div>
+
+<header class="wrap">
+  <div class="nameplate">
+    <h1>SteadyStack</h1>
+    <span class="live-indicator" id="live-indicator" title="Live on-chain data">
+      <span class="pulse-dot" aria-hidden="true"></span><span id="live-label">Live</span>
+    </span>
+  </div>
+  <p class="tagline">Auto-DCA with a deterministic crash guard. A reactive contract on
+  Lasna watches the WETH/USDC pool on Base Sepolia, buys 1 USDC of WETH on
+  schedule, and stops buying when the price crashes. Built for the Reactive
+  Omni Buildathon, track Set It and Forget It.</p>
+  <div class="status-row">
+    <span class="chip chip-parked" id="status-parked"><span class="lamp lamp-amber" aria-hidden="true"></span><span id="status-parked-text">Reading status…</span></span>
+    <span class="chip chip-debt" id="status-debt" hidden><span class="lamp lamp-red" aria-hidden="true"></span><span id="status-debt-text"></span></span>
+    <span class="chip chip-ok" id="status-ready" hidden><span class="lamp lamp-green" aria-hidden="true"></span><span>Ready to resume</span></span>
+    <span class="updated mono" id="updated-top">Connecting…</span>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section id="health" aria-labelledby="health-heading">
+    <h2 id="health-heading">Reactive health</h2>
+    <p class="section-note">The reactive pays for its own execution in lREACT. Any
+    outstanding debt suspends it — no ticks, no buys — until the debt is
+    repaid. Keep the balance above 0.02 lREACT, one callback charge plus
+    margin.</p>
+    <div class="figures">
+      <div class="figure">
+        <div class="figure-label">Reactive balance</div>
+        <div class="figure-value mono" id="health-balance">…</div>
+        <div class="figure-sub">lREACT · Lasna</div>
+      </div>
+      <div class="figure figure-alert">
+        <div class="figure-label">Reactive debt</div>
+        <div class="figure-value mono" id="health-debt">…</div>
+        <div class="figure-sub" id="health-debt-sub">lREACT · Lasna</div>
+      </div>
+      <div class="figure">
+        <div class="figure-label">Vault debt</div>
+        <div class="figure-value mono" id="health-vault-debt">…</div>
+        <div class="figure-sub">Base Sepolia</div>
+      </div>
+      <div class="figure">
+        <div class="figure-label">Crash guard</div>
+        <div class="figure-value" id="health-guard">…</div>
+        <div class="figure-sub" id="health-guard-sub">Trips on a sharp drop, resumes on recovery</div>
+      </div>
+    </div>
+    <p class="status-line mono" id="health-status"></p>
+  </section>
+
+  <section id="proof" aria-labelledby="proof-heading">
+    <h2 id="proof-heading">Proof it ran</h2>
+    <p class="section-note">Every buy is two transactions: the reactive requests
+    it on Lasna, the vault executes it on Base Sepolia. Counts come from
+    on-chain events — the library has no callback list to query, so events
+    are the honest source.</p>
+    <div class="figures figures-three">
+      <div class="figure">
+        <div class="figure-label">Buy requests</div>
+        <div class="figure-value mono" id="cb-requested">…</div>
+        <div class="figure-sub">BuyRequested events · Lasna</div>
+      </div>
+      <div class="figure">
+        <div class="figure-label">Buys filled</div>
+        <div class="figure-value mono" id="cb-filled">…</div>
+        <div class="figure-sub">Bought events · Base Sepolia</div>
+      </div>
+      <div class="figure">
+        <div class="figure-label">Buys skipped</div>
+        <div class="figure-value mono" id="cb-skipped">…</div>
+        <div class="figure-sub">BuySkipped events · Base Sepolia</div>
+      </div>
+    </div>
+    <div class="table-scroll">
+      <table class="ledger" id="ledger-table">
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Buy · Base Sepolia</th>
+            <th scope="col">Request · Lasna</th>
+            <th scope="col" class="num">USDC in</th>
+            <th scope="col" class="num">WETH out</th>
+            <th scope="col" class="num">Price at buy</th>
+            <th scope="col" class="num">Block</th>
+          </tr>
+        </thead>
+        <tbody id="ledger-body">
+          <tr><td colspan="7" class="loading-cell mono">Loading ledger…</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="status-line mono" id="ledger-status"></p>
+  </section>
+
+  <section id="vault" aria-labelledby="vault-heading">
+    <h2 id="vault-heading">Vault</h2>
+    <p class="section-note">The vault holds the USDC inventory and the WETH it
+    has bought. It swaps directly against the pool — no router, no approvals.</p>
+    <div class="figures">
+      <div class="figure">
+        <div class="figure-label">USDC held</div>
+        <div class="figure-value mono" id="vault-usdc">…</div>
+        <div class="figure-sub">Base Sepolia USDC</div>
+      </div>
+      <div class="figure">
+        <div class="figure-label">WETH held</div>
+        <div class="figure-value mono" id="vault-weth">…</div>
+        <div class="figure-sub">Base Sepolia WETH</div>
+      </div>
+      <div class="figure">
+        <div class="figure-label">Total spent</div>
+        <div class="figure-value mono" id="vault-spent">…</div>
+        <div class="figure-sub">USDC across all buys</div>
+      </div>
+      <div class="figure">
+        <div class="figure-label">Total bought</div>
+        <div class="figure-value mono" id="vault-bought">…</div>
+        <div class="figure-sub">WETH across all buys</div>
+      </div>
+    </div>
+    <p class="status-line mono" id="vault-status"></p>
+  </section>
+
+  <section id="price" aria-labelledby="price-heading">
+    <h2 id="price-heading">Live price</h2>
+    <div class="price-readout">
+      <div class="price-big mono" id="price-pool">…</div>
+      <div class="price-caption">WETH/USDC · Uniswap V3 pool, Base Sepolia · from
+      slot0, exact BigInt math</div>
+    </div>
+    <div class="figures">
+      <div class="figure">
+        <div class="figure-label">Last price seen</div>
+        <div class="figure-value mono" id="price-last">…</div>
+        <div class="figure-sub">Last Swap the reactive processed</div>
+      </div>
+      <div class="figure">
+        <div class="figure-label">EMA</div>
+        <div class="figure-value mono" id="price-ema">…</div>
+        <div class="figure-sub">Smoothing factor 1/4</div>
+      </div>
+      <div class="figure">
+        <div class="figure-label">Reference price</div>
+        <div class="figure-value mono" id="price-ref">…</div>
+        <div class="figure-sub">Price of the last confirmed buy</div>
+      </div>
+      <div class="figure">
+        <div class="figure-label">Guard thresholds</div>
+        <div class="figure-value mono figure-value-small" id="price-thresholds">…</div>
+        <div class="figure-sub" id="price-thresholds-sub">Trip and resume levels</div>
+      </div>
+    </div>
+    <p class="status-line mono" id="price-status"></p>
+  </section>
+
+  <section id="rule" aria-labelledby="rule-heading">
+    <h2 id="rule-heading">The rule</h2>
+    <p class="section-note">Read live from the reactive contract. The loop is
+    parked on a long interval to save fuel while the reactive carries debt.</p>
+    <dl class="rule-list">
+      <div class="rule-row"><dt>Amount per buy</dt><dd class="mono" id="rule-amount">…</dd></div>
+      <div class="rule-row"><dt>Interval</dt><dd class="mono" id="rule-interval">…</dd></div>
+      <div class="rule-row"><dt>Max price</dt><dd class="mono" id="rule-max">…</dd></div>
+      <div class="rule-row"><dt>Guard trip</dt><dd class="mono" id="rule-guard">…</dd></div>
+      <div class="rule-row"><dt>Guard resume</dt><dd class="mono" id="rule-resume">…</dd></div>
+      <div class="rule-row"><dt>Manually paused</dt><dd class="mono" id="rule-paused">…</dd></div>
+      <div class="rule-row"><dt>Ticks processed</dt><dd class="mono" id="rule-ticks">…</dd></div>
+      <div class="rule-row"><dt>Last buy tick</dt><dd class="mono" id="rule-lastbuy">…</dd></div>
+    </dl>
+    <p class="status-line mono" id="rule-status"></p>
+  </section>
+
+  <details id="how">
+    <summary>How it works</summary>
+    <div class="how-body">
+      <div class="flow" aria-label="Pool to reactive to vault">
+        <div class="flow-step"><strong>Pool</strong><span>WETH/USDC on Base Sepolia emits Swap events</span></div>
+        <div class="flow-arrow" aria-hidden="true">→</div>
+        <div class="flow-step"><strong>Reactive</strong><span>On Lasna, watches the pool, tracks price and EMA, and requests a buy when one is due</span></div>
+        <div class="flow-arrow" aria-hidden="true">→</div>
+        <div class="flow-step"><strong>Vault</strong><span>On Base Sepolia, swaps 1 USDC for WETH directly against the pool</span></div>
+      </div>
+      <p>The guard is deterministic: if the spot price drops more than the trip
+      percentage below the reference price, the reactive pauses the vault; when
+      the EMA recovers above the resume level, buying continues. The reference
+      updates only on confirmed fills, so a crash cannot drag the baseline
+      down with it.</p>
+      <p>To resume after a debt stall, the owner tops up the reactive, repays
+      the debt with <span class="mono">coverDebt()</span>, and sets a new
+      interval with <span class="mono">setRule()</span>. Nothing on this page
+      sends a transaction — it only reads.</p>
+    </div>
+  </details>
+
+  <footer id="contracts" aria-labelledby="contracts-heading">
+    <h2 id="contracts-heading">Contracts and links</h2>
+    <div class="address-list">
+      <div class="address-row">
+        <div><div class="address-label">SteadyReactive · Lasna (5318007)</div>
+        <div class="mono address-value">0xdcF6cccD1d6eC0f071409f6e09989AE637CC501f</div></div>
+        <div class="address-actions">
+          <button type="button" class="copy-btn mono" data-copy="0xdcF6cccD1d6eC0f071409f6e09989AE637CC501f">Copy</button>
+          <a href="https://lasna.reactscan.net/address/0xdcF6cccD1d6eC0f071409f6e09989AE637CC501f">Reactscan</a>
+          <a href="https://repo.sourcify.dev/5318007/0xdcF6cccD1d6eC0f071409f6e09989AE637CC501f">Sourcify</a>
+        </div>
+      </div>
+      <div class="address-row">
+        <div><div class="address-label">SteadyVault · Base Sepolia (84532)</div>
+        <div class="mono address-value">0xdcF6cccD1d6eC0f071409f6e09989AE637CC501f</div></div>
+        <div class="address-actions">
+          <button type="button" class="copy-btn mono" data-copy="0xdcF6cccD1d6eC0f071409f6e09989AE637CC501f">Copy</button>
+          <a href="https://base-sepolia.blockscout.com/address/0xdcF6cccD1d6eC0f071409f6e09989AE637CC501f">Blockscout</a>
+          <a href="https://sepolia.basescan.org/address/0xdcF6cccD1d6eC0f071409f6e09989AE637CC501f">BaseScan</a>
+          <a href="https://repo.sourcify.dev/84532/0xdcF6cccD1d6eC0f071409f6e09989AE637CC501f">Sourcify</a>
+        </div>
+      </div>
+      <div class="address-row">
+        <div><div class="address-label">WETH/USDC 0.3% pool · Base Sepolia</div>
+        <div class="mono address-value">0x46880b404cd35c165eddeff7421019f8dd25f4ad</div></div>
+        <div class="address-actions">
+          <button type="button" class="copy-btn mono" data-copy="0x46880b404cd35c165eddeff7421019f8dd25f4ad">Copy</button>
+          <a href="https://base-sepolia.blockscout.com/address/0x46880b404cd35c165eddeff7421019f8dd25f4ad">Blockscout</a>
+        </div>
+      </div>
+    </div>
+    <p class="footer-links">
+      <a href="https://github.com/arefki/steadystack">Source code on GitHub</a>
+      <a href="https://dorahacks.io/hackathon/reactive-omni-buildathon">Reactive Omni Buildathon on DoraHacks</a>
+      <a href="https://blog.reactive.network/reactive-omni-buildathon-thirty-days-to-find-out-what-one-second-buys/">Buildathon announcement</a>
+      <a href="https://base-sepolia.blockscout.com/address/0xdcF6cccD1d6eC0f071409f6e09989AE637CC501f/logs">All vault events</a>
+    </p>
+    <p class="source-note">Every number on this page is read live from the
+    Lasna and Base Sepolia public RPCs, except the DCA history, which is
+    pre-indexed from on-chain events and extended by a live scan for newer
+    buys. If a read fails, the section says so instead of showing a stale or
+    invented number. Testnet only — no real funds. Both contracts are
+    Sourcify-verified (exact match).</p>
+    <p class="source-note mono" id="page-status"></p>
+  </footer>
+
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
